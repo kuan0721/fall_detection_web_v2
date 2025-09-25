@@ -3,23 +3,36 @@ class FallDetectionApp {
         this.socket = null;
         this.isMonitoring = false;
         this.alerts = [];
+        this.settingsModal = null;
         this.currentSettings = {
             fall_vdrop: 0.10,
             fall_angle_deg: 55.0,
             fall_aspect: 1.00,
             fall_dwell_s: 0.3
         };
-        
+
         this.init();
     }
-    
+
     init() {
         this.initSocket();
+        this.initModal();
         this.bindEvents();
         this.updateStatus();
         this.startTimeUpdate();
     }
-    
+
+    initModal() {
+        const modalElement = document.getElementById('settingsModal');
+
+        if (modalElement && typeof bootstrap !== 'undefined') {
+            this.settingsModal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static',
+                keyboard: true
+            });
+        }
+    }
+
     initSocket() {
         this.socket = io();
         
@@ -59,32 +72,14 @@ class FallDetectionApp {
         document.getElementById('settings-btn').addEventListener('click', () => {
             this.showSettings();
         });
-        
+
         // 設定對話框
         document.getElementById('save-settings').addEventListener('click', () => {
             this.saveSettings();
         });
-        
+
         document.getElementById('cancel-settings').addEventListener('click', () => {
             this.hideSettings();
-        });
-        
-        document.querySelector('.close').addEventListener('click', () => {
-            this.hideSettings();
-        });
-        
-        // 點擊對話框外部關閉
-        document.getElementById('settings-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'settings-modal') {
-                this.hideSettings();
-            }
-        });
-        
-        // ESC 鍵關閉對話框
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.hideSettings();
-            }
         });
     }
     
@@ -190,8 +185,8 @@ class FallDetectionApp {
         const stopBtn = document.getElementById('stop-btn');
         const videoFeed = document.getElementById('video-feed');
         const videoPlaceholder = document.getElementById('video-placeholder');
-        const container = document.querySelector('.container');
-        
+        const container = document.querySelector('.app-wrapper');
+
         if (monitoring) {
             startBtn.disabled = true;
             stopBtn.disabled = false;
@@ -283,11 +278,19 @@ class FallDetectionApp {
         document.getElementById('fall-aspect').value = this.currentSettings.fall_aspect;
         document.getElementById('fall-dwell').value = this.currentSettings.fall_dwell_s;
         
-        document.getElementById('settings-modal').style.display = 'block';
+        if (!this.settingsModal) {
+            this.initModal();
+        }
+
+        if (this.settingsModal) {
+            this.settingsModal.show();
+        }
     }
-    
+
     hideSettings() {
-        document.getElementById('settings-modal').style.display = 'none';
+        if (this.settingsModal) {
+            this.settingsModal.hide();
+        }
     }
     
     async saveSettings() {
