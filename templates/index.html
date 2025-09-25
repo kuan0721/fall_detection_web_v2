@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跌倒檢測監控系統</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-shield-alt"></i> 跌倒檢測監控系統</h1>
+            <div class="status-bar">
+                <div class="status-item">
+                    <i class="fas fa-circle" id="connection-status"></i>
+                    <span id="connection-text">未連接</span>
+                </div>
+                <div class="status-item">
+                    <i class="fas fa-telegram-plane" id="telegram-status"></i>
+                    <span id="telegram-text">Telegram未配置</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <div class="control-panel">
+                <div class="control-group">
+                    <label for="video-source">影像來源：</label>
+                    <select id="video-source">
+                        <option value="0">攝影機 (0)</option>
+                        <option value="1">攝影機 (1)</option>
+                        <option value="video.mp4">測試影片</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="model-select">檢測模型：</label>
+                    <select id="model-select">
+                        <option value="lite">輕量模型 (速度快)</option>
+                        <option value="heavy" selected>重型模型 (精度高)</option>
+                    </select>
+                </div>
+                
+                <div class="control-buttons">
+                    <button id="start-btn" class="btn btn-success">
+                        <i class="fas fa-play"></i> 開始監控
+                    </button>
+                    <button id="stop-btn" class="btn btn-danger" disabled>
+                        <i class="fas fa-stop"></i> 停止監控
+                    </button>
+                    <button id="settings-btn" class="btn btn-secondary">
+                        <i class="fas fa-cog"></i> 設定
+                    </button>
+                </div>
+            </div>
+
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <img id="video-feed" src="" alt="監控畫面" style="display: none;">
+                    <div id="video-placeholder" class="placeholder">
+                        <i class="fas fa-video"></i>
+                        <p>點擊"開始監控"以顯示畫面</p>
+                    </div>
+                    <div id="video-overlay">
+                        <div class="info-panel">
+                            <div class="info-item">
+                                <i class="fas fa-users"></i>
+                                <span id="person-count">0</span> 人
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-clock"></i>
+                                <span id="current-time">--:--:--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alerts-panel">
+                <h3><i class="fas fa-exclamation-triangle"></i> 警報記錄</h3>
+                <div id="alerts-list">
+                    <div class="no-alerts">目前無警報記錄</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 設定對話框 -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-cog"></i> 檢測參數設定</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <label for="fall-vdrop">垂直下降閾值 (影像高度比例/秒)：</label>
+                    <input type="number" id="fall-vdrop" step="0.01" value="0.10" min="0.01" max="1.0">
+                    <small>數值越小越敏感</small>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="fall-angle">軀幹角度閾值 (度)：</label>
+                    <input type="number" id="fall-angle" step="1" value="55" min="0" max="90">
+                    <small>軀幹相對垂直的角度，超過此值視為水平</small>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="fall-aspect">邊界框比例閾值 (寬/高)：</label>
+                    <input type="number" id="fall-aspect" step="0.1" value="1.0" min="0.1" max="3.0">
+                    <small>人體邊界框的寬高比</small>
+                </div>
+                
+                <div class="setting-group">
+                    <label for="fall-dwell">水平姿勢持續時間 (秒)：</label>
+                    <input type="number" id="fall-dwell" step="0.1" value="0.3" min="0.1" max="2.0">
+                    <small>需要維持水平姿勢多長時間才觸發警報</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-settings" class="btn btn-primary">
+                    <i class="fas fa-save"></i> 儲存設定
+                </button>
+                <button id="cancel-settings" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> 取消
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 載入中遮罩 -->
+    <div id="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <p>正在載入模型...</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
